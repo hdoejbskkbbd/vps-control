@@ -2,37 +2,43 @@
 
 **Owner:** anonymous | **Bot:** Priya v3.0 | **Status:** LIVE
 
-## 📡 Quick Access
+## 🚀 Quick Start
 
-| Service | Command |
-|---------|---------|
-| Restart Bot | `bash scripts/restart_bot.sh` |
-| Check Logs | `bash scripts/logs.sh` |
-| Send Message | `python3 scripts/send_msg.py "your message"` |
-| Update Bot | `bash scripts/update.sh` |
+### 1. Setup Self-Hosted Runner (ONCE)
+Follow [SETUP_RUNNER.md](SETUP_RUNNER.md) to connect your VPS to GitHub Actions.
 
-## 🚀 GitHub Actions Workflows
-
-Trigger from GitHub UI or API:
+### 2. Use Workflows
+After runner setup, all workflows run directly on your VPS:
 
 | Workflow | Purpose | Trigger |
 |----------|---------|---------|
 | `bot-deploy.yml` | Auto-deploy bot on push | Push to main |
-| `vps-health.yml` | VPS health checks | Every 5 min / Manual |
 | `send-message.yml` | Send message to live chat | Manual |
+| `vps-health.yml` | VPS health checks | Every 5 min / Manual |
 | `bot-logs.yml` | Fetch bot logs | Manual |
 | `bot-command.yml` | Execute any VPS command | Manual |
-| `ngrok-start.yml` | Start ngrok SSH tunnel | Manual |
 
-## 🔐 Required Secrets (GitHub Settings)
+## 📡 Manual Commands (on VPS)
 
-Add these in **Settings > Secrets and variables > Actions**:
+```bash
+# Start bot
+bash scripts/start_bot.sh
 
-| Secret | Value |
-|--------|-------|
-| `VPS_HOST` | Your VPS IP or ngrok host |
-| `VPS_SSH_KEY` | Private SSH key for root access |
-| `NGROK_TOKEN` | Your ngrok authtoken |
+# Stop bot
+bash scripts/stop_bot.sh
+
+# Restart bot
+bash scripts/restart_bot.sh
+
+# View logs
+bash scripts/logs.sh
+
+# Send test message
+python3 scripts/send_msg.py "Hello from DRC!"
+
+# Update from repo
+bash scripts/update.sh
+```
 
 ## 🤖 Priya Bot Features
 
@@ -44,33 +50,15 @@ Add these in **Settings > Secrets and variables > Actions**:
 - ✅ Points system & custom commands
 - ✅ Anti-spam & flood protection
 
-## ⚡ DRC Commands
-
-```bash
-# Start bot
-bash scripts/start_bot.sh
-
-# Stop bot
-bash scripts/stop_bot.sh
-
-# View live logs
-tail -f /opt/priya/bot_run.log
-
-# Send test message
-python3 scripts/send_msg.py "Hello from DRC!"
-
-# Check VPS health
-bash scripts/health.sh
-```
-
 ## 📁 Repo Structure
 
 ```
 vps-control/
-├── .github/workflows/     # GitHub Actions
+├── .github/workflows/     # GitHub Actions (self-hosted runner)
 ├── scripts/               # Shell/Python scripts
 ├── config/                # Config files
 ├── requirements.txt       # Python deps
+├── SETUP_RUNNER.md        # Runner setup guide
 └── README.md
 ```
 
