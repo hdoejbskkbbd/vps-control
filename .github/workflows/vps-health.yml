@@ -7,20 +7,17 @@ on:
 
 jobs:
   health:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
-      - name: Check VPS Status
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: root
-          key: ${{ secrets.VPS_SSH_KEY }}
-          script: |
-            echo "=== VPS STATUS ==="
-            uptime
-            free -h
-            df -h
-            echo "=== BOT STATUS ==="
-            ps aux | grep priya_bot | grep -v grep || echo 'Bot not running'
-            echo "=== NGROK STATUS ==="
-            curl -s http://localhost:4040/api/tunnels || echo 'ngrok not running'
+      - name: VPS Status
+        run: |
+          echo "=== VPS STATUS ==="
+          uptime
+          free -h
+          df -h
+          echo ""
+          echo "=== BOT STATUS ==="
+          ps aux | grep priya_bot | grep -v grep || echo 'Bot not running'
+          echo ""
+          echo "=== LAST 20 LOG LINES ==="
+          tail -20 /opt/priya/bot_run.log
