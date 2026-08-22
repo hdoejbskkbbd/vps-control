@@ -1,0 +1,8 @@
+version: "2"
+authtoken: YOUR_NGROK_TOKEN_HERE
+region: ap
+tunnels:
+  ssh:
+    proto: tcp
+    addr: 22
+    inspect: false
