@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  priya-bot:
+    build: .
+    container_name: priya-bot
+    restart: unless-stopped
+    environment:
+      - YOUTUBE_VIDEO_ID=WTgdVYtWeSg
+      - CREATOR=james-2d
+      - OLLAMA_ENABLED=false
+    volumes:
+      - priya_data:/app/priya_chrome_data
+      - priya_logs:/app/logs
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  priya_data:
+  priya_logs:
