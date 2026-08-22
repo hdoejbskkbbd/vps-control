@@ -1,4 +1,4 @@
-name: 🚀 Bot Deploy
+name: 🚀 Bot Deploy (Self-Hosted)
 
 on:
   push:
@@ -7,19 +7,13 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
-
-      - name: Deploy to VPS
+      - name: Deploy Bot on VPS
         run: |
-          ssh -o StrictHostKeyChecking=no root@${{ secrets.VPS_HOST }} << 'EOF'
-            cd /opt/priya
-            git pull origin main
-            bash scripts/restart_bot.sh
-          EOF
+          cd /opt/priya
+          git pull origin main
+          bash scripts/restart_bot.sh
+          echo "[+] Bot deployed successfully"
