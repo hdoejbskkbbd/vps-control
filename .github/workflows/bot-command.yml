@@ -1,0 +1,22 @@
+name: ⚡ Execute Bot Command
+
+on:
+  workflow_dispatch:
+    inputs:
+      command:
+        description: 'Command to execute on VPS'
+        required: true
+        default: 'uptime'
+
+jobs:
+  exec:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Execute
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: root
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            ${{ github.event.inputs.command }}
