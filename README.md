@@ -1,36 +1,58 @@
-# 🔥 DRC SSH VPS
+# 🔥 DRC VPS - Railway Deploy
 
-**One-click GitHub Actions → Ubuntu VPS with ngrok SSH tunnel**
+**Ubuntu 24.04 + SSH + ngrok + 16GB Swap + Bot Ready**
 
-## 🚀 How to Use
+## 🚀 Deploy on Railway
 
-1. **Go to Actions tab** in this repo
-2. Click **"DRC Root SSH VPS"** workflow
-3. Click **"Run workflow"**
-4. Wait 1-2 minutes
-5. Check logs for SSH connection details:
+1. Fork/Use this repo: `hdoejbskkbbd/vps-control`
+2. Go to [Railway Dashboard](https://railway.app/dashboard)
+3. **New Project** → **Deploy from GitHub repo**
+4. Select this repo
+5. Railway auto-builds from `Dockerfile`
+
+## 🔐 SSH Access
+
+After deploy, check **Railway Logs** for:
 ```
-🌐 SSH URL: tcp://0.tcp.ap.ngrok.io:xxxxx
-👤 Username: root
-🔐 Password: root123
+🌐 SSH ACCESS READY
+URL: tcp://0.tcp.ap.ngrok.io:xxxxx
+Host: 0.tcp.ap.ngrok.io
+Port: xxxxx
+👤 User: root
+🔐 Pass: root123
 ```
 
-## 🔐 Connect
+Connect:
 ```bash
 ssh -p xxxxx root@0.tcp.ap.ngrok.io
 # Password: root123
 ```
 
-## ⚡ What's Inside
-- Ubuntu latest (GitHub Actions runner)
-- 16GB RAM + 16GB Swap
-- Root SSH access
+## 📋 What's Inside
+- Ubuntu 24.04 (latest)
+- 16GB Swap
+- OpenSSH (root/root123)
 - ngrok TCP tunnel (auto-restart)
-- Basic tools: curl, wget, htop, tmux
+- Python3 + pip + git + ffmpeg
+- Playwright + Chromium
+- htop, tmux, vim, nano, curl, wget
 
-## ⏰ Session
-- **6 hours** max (GitHub Actions limit)
-- Auto-restarts if ngrok tunnel dies
+## ⚡ After SSH - Install Bot
+```bash
+# Already installed:
+# - python3, pip, git, ffmpeg
+# - playwright, requests, psutil, schedule
+# - chromium browsers
+
+# Just add your bot code:
+git clone https://github.com/youruser/your-bot.git
+cd your-bot
+python3 your_bot.py
+```
+
+## 🔄 Auto-Restart
+- ngrok tunnel auto-restarts if it dies
+- Railway auto-restarts container on failure
 
 ---
 **anonymous ka hukum sar aankhon pe** 👑
