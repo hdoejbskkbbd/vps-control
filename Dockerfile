@@ -1,43 +1,39 @@
-FROM python:3.10-slim
+FROM ubuntu:22.04
 
-LABEL maintainer="DRC"
-LABEL description="Priya Bot v3.0 - YouTube Live Chat Commander"
-
-# Install system deps
+# Install SSH and ngrok dependencies
 RUN apt-get update && apt-get install -y \
-    curl wget git ssh ffmpeg \
-    libglib2.0-0 libnss3 libnspr4 \
-    libatk1.0-0 libatk-bridge2.0-0 \
-    libcups2 libdrm2 libdbus-1-3 \
-    libxkbcommon0 libxcomposite1 \
-    libxdamage1 libxfixes3 libxrandr2 \
-    libgbm1 libpango-1.0-0 libcairo2 \
-    libasound2 libatspi2.0-0 \
+    openssh-server \
+    curl \
+    wget \
+    net-tools \
+    vim \
+    nano \
+    htop \
+    tmux \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app
+# Setup SSH
+RUN mkdir /var/run/sshd
+RUN echo 'root:Anony#234' | chpasswd
+RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
+RUN sed -i 's/#Port 22/Port 22/' /etc/ssh/sshd_config
 
-# Copy and install Python deps
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Install ngrok
+RUN curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null \
+    && echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | tee /etc/apt/sources.list.d/ngrok.list \
+    && apt-get update \
+    && apt-get install -y ngrok \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install Playwright browsers
-RUN playwright install chromium
-RUN playwright install-deps chromium
+# ngrok authtoken (will be set via env var)
+# RUN ngrok config add-authtoken $NGROK_AUTHTOKEN
 
-# Copy bot code
-COPY bot/ ./bot/
-COPY config/bot.env ./config/
+# Expose SSH port
+EXPOSE 22
 
-# Create data dirs
-RUN mkdir -p /app/priya_chrome_data /app/logs /app/outputs
+# Start script
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
 
-ENV PYTHONUNBUFFERED=1
-ENV DISPLAY=:1
-
-EXPOSE 8080
-
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD python3 -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')" || exit 1
-
-CMD ["python3", "bot/priya_bot_v3_all_in_one.py"]
+CMD ["/start.sh"]
