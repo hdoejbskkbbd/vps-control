@@ -1,69 +1,52 @@
-# 🔥 DRC VPS CONTROL CENTER
+# 🔥 DRC SSH VPS - Railway Deploy
 
-**Owner:** anonymous | **Bot:** Priya v3.0 | **Status:** LIVE
+**Purpose:** SSH access to Railway VPS via ngrok tunnel
 
-## 🚀 Quick Start
+## 🚀 Deploy on Railway
 
-### 1. Setup Self-Hosted Runner (ONCE)
-Follow [SETUP_RUNNER.md](SETUP_RUNNER.md) to connect your VPS to GitHub Actions.
+1. **Fork/Use this repo** on GitHub
+2. **Connect to Railway:**
+   - Go to [Railway Dashboard](https://railway.app/dashboard)
+   - New Project → Deploy from GitHub repo
+   - Select this repo
+3. **Add Environment Variable:**
+   - `NGROK_AUTHTOKEN` = Your ngrok authtoken
+4. **Deploy!** Railway builds from Dockerfile
 
-### 2. Use Workflows
-After runner setup, all workflows run directly on your VPS:
+## 🔐 SSH Access
 
-| Workflow | Purpose | Trigger |
-|----------|---------|---------|
-| `bot-deploy.yml` | Auto-deploy bot on push | Push to main |
-| `send-message.yml` | Send message to live chat | Manual |
-| `vps-health.yml` | VPS health checks | Every 5 min / Manual |
-| `bot-logs.yml` | Fetch bot logs | Manual |
-| `bot-command.yml` | Execute any VPS command | Manual |
+After deploy, check Railway logs for:
+```
+🌐 SSH ACCESS READY
+URL: tcp://0.tcp.ap.ngrok.io:xxxxx
+User: root
+Pass: Anony#234
+```
 
-## 📡 Manual Commands (on VPS)
-
+Connect:
 ```bash
-# Start bot
-bash scripts/start_bot.sh
-
-# Stop bot
-bash scripts/stop_bot.sh
-
-# Restart bot
-bash scripts/restart_bot.sh
-
-# View logs
-bash scripts/logs.sh
-
-# Send test message
-python3 scripts/send_msg.py "Hello from DRC!"
-
-# Update from repo
-bash scripts/update.sh
+ssh -p xxxxx root@0.tcp.ap.ngrok.io
+# Password: Anony#234
 ```
 
-## 🤖 Priya Bot Features
+## 📋 What's Inside
 
-- ✅ YouTube Live Chat integration
-- ✅ AI replies via OpenRouter/Ollama
-- ✅ Auto-messages every 30s
-- ✅ Moderation commands (.block, .ban, .timeout)
-- ✅ Creator-only admin commands (a, t, .g, .s)
-- ✅ Points system & custom commands
-- ✅ Anti-spam & flood protection
+- Ubuntu 22.04 base
+- OpenSSH server (root/Anony#234)
+- ngrok TCP tunnel (auto-starts)
+- Basic tools: curl, wget, vim, htop, tmux
 
-## 📁 Repo Structure
+## ⚡ Next Steps
 
-```
-vps-control/
-├── .github/workflows/     # GitHub Actions (self-hosted runner)
-├── scripts/               # Shell/Python scripts
-├── config/                # Config files
-├── requirements.txt       # Python deps
-├── SETUP_RUNNER.md        # Runner setup guide
-└── README.md
+Once SSH is ready, you can:
+```bash
+# Install anything you need
+apt update && apt install -y python3 python3-pip
+
+# Setup your bot manually
+# Or clone your bot repo
+git clone https://github.com/youruser/your-bot.git
 ```
 
 ---
-
 **anonymous ka hukum sar aankhon pe** 👑
-
-*Built by DRC for anonymous | No limits, no mercy*
