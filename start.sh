@@ -1,46 +1,33 @@
 #!/bin/bash
-# DRC SSH + ngrok Tunnel Startup
+# DRC VPS Startup - Railway Native
 
 echo "=========================================="
-echo "  DRC SSH VPS - Starting..."
+echo "  DRC VPS - Railway Deploy"
 echo "=========================================="
 
-# Start SSH service
+# Start SSH (internal only, Railway doesn't expose 22)
 service ssh start
-echo "[+] SSH service started on port 22"
+echo "[+] SSH started (internal port 22)"
 
-# Configure ngrok with token from env
-if [ -n "$NGROK_AUTHTOKEN" ]; then
-    echo "[+] Configuring ngrok..."
-    ngrok config add-authtoken "$NGROK_AUTHTOKEN"
-
-    # Start ngrok TCP tunnel for SSH
-    echo "[+] Starting ngrok tunnel..."
-    ngrok tcp 22 --region ap &
-
-    # Wait for tunnel
-    sleep 10
-
-    # Get public URL
-    TUNNEL_URL=$(curl -s http://localhost:4040/api/tunnels | grep -o 'tcp://[^"]*' | head -1)
-    if [ -n "$TUNNEL_URL" ]; then
-        echo ""
-        echo "=========================================="
-        echo "  🌐 SSH ACCESS READY"
-        echo "  URL: $TUNNEL_URL"
-        echo "  User: root"
-        echo "  Pass: Anony#234"
-        echo "=========================================="
-    else
-        echo "[!] ngrok tunnel not established yet"
-        echo "[!] Check: curl http://localhost:4040/api/tunnels"
-    fi
-else
-    echo "[!] NGROK_AUTHTOKEN not set!"
-    echo "[!] Set it as environment variable in Railway"
-fi
-
-# Keep container running
+# Show Railway info
 echo ""
-echo "[+] Container running - SSH active"
+echo "[+] Railway Domain: $RAILWAY_PUBLIC_DOMAIN"
+echo "[+] Railway URL: $RAILWAY_STATIC_URL"
+echo ""
+
+# Start info web server on Railway's PORT
+python3 /info_server.py &
+echo "[+] Info server started on port ${PORT:-8080}"
+
+echo ""
+echo "=========================================="
+echo "  🌐 Access your VPS:"
+echo "  https://$RAILWAY_PUBLIC_DOMAIN"
+echo "=========================================="
+echo ""
+echo "[+] For SSH, use Railway CLI:"
+echo "    railway login && railway ssh"
+echo ""
+
+# Keep running
 tail -f /dev/null
