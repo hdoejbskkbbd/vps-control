@@ -1,0 +1,105 @@
+name: 🔥 DRC Root SSH VPS
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+    - name: 📦 Install Dependencies + 16GB Swap
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq openssh-server curl wget unzip jq htop tmux > /dev/null 2>&1
+
+        # Create 16GB swap
+        echo "[+] Setting up 16GB swap..."
+        sudo fallocate -l 16G /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1G count=16
+        sudo chmod 600 /swapfile
+        sudo mkswap /swapfile
+        sudo swapon /swapfile
+        echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+        echo "[+] Swap created:"
+        free -h
+
+    - name: 🔐 Setup SSH & Root Access
+      run: |
+        sudo systemctl enable ssh
+        sudo systemctl start ssh
+        sudo sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+        sudo sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
+        sudo systemctl restart ssh
+        echo "root:root123" | sudo chpasswd
+        echo "[+] SSH ready - User: root | Pass: root123"
+
+    - name: 🌐 Install ngrok
+      run: |
+        curl -sSL https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz -o ngrok.tgz
+        sudo tar -xzf ngrok.tgz -C /usr/local/bin
+        rm ngrok.tgz
+        ngrok version
+
+    - name: 🔑 Auth ngrok (Token Embedded)
+      run: |
+        ngrok config add-authtoken 3HuPDUNr8MzvSSMkyIDKhrmqK5V_4n78XtG7aihTWjVAhcTxr
+        echo "[+] ngrok authenticated"
+
+    - name: 🚀 Start ngrok Tunnel & Keep Alive
+      run: |
+        ngrok tcp 22 --region ap &
+        sleep 10
+
+        echo "=========================================="
+        echo "  🔥 DRC VPS READY"
+        echo "=========================================="
+        echo ""
+
+        TUNNEL=$(curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url')
+        if [ -n "$TUNNEL" ] && [ "$TUNNEL" != "null" ]; then
+          echo "🌐 SSH URL: $TUNNEL"
+          HOST=$(echo $TUNNEL | sed 's|tcp://||' | cut -d: -f1)
+          PORT=$(echo $TUNNEL | sed 's|tcp://||' | cut -d: -f2)
+          echo "📡 Host: $HOST"
+          echo "🔌 Port: $PORT"
+        else
+          echo "⚠️  Getting tunnel info..."
+          curl -s http://localhost:4040/api/tunnels | jq .
+        fi
+
+        echo ""
+        echo "👤 Username: root"
+        echo "🔐 Password: root123"
+        echo "🌍 Region: ap (Asia-Pacific)"
+        echo "⏰ Session: 6 Hours (auto-restart)"
+        echo "💾 RAM: 16GB + 16GB Swap"
+        echo "=========================================="
+
+        # KEEP ALIVE - auto restart if tunnel dies
+        while true; do
+          echo "⏳ [$(date)] DRC VPS running..."
+
+          if ! curl -s http://localhost:4040/api/tunnels > /dev/null 2>&1; then
+            echo "⚠️  Tunnel died! Restarting..."
+            pkill ngrok || true
+            ngrok tcp 22 --region ap &
+            sleep 10
+
+            TUNNEL=$(curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url')
+            echo "🌐 New URL: $TUNNEL"
+          fi
+
+          # Show system stats every 5 min
+          if [ $(($(date +%s) % 300)) -lt 60 ]; then
+            echo ""
+            echo "📊 System Stats:"
+            free -h | grep -E "Mem|Swap"
+            df -h / | tail -1
+            uptime
+            echo ""
+          fi
+
+          sleep 60
+        done
