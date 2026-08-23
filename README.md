@@ -1,53 +1,47 @@
-# 🔥 DRC VPS - Railway Deploy (No ngrok needed!)
+# 🔥 DRC VPS - Railway + ngrok
 
-**Ubuntu 24.04 + Web Terminal + 16GB Swap + Bot Ready**
+**Ubuntu 24.04 + SSH + ngrok TCP tunnel + 16GB Swap**
 
 ## 🚀 Deploy on Railway
 
-1. Fork/Use this repo: `hdoejbskkbbd/vps-control`
-2. Go to [Railway Dashboard](https://railway.app/dashboard)
+1. Fork/Use: `hdoejbskkbbd/vps-control`
+2. [Railway Dashboard](https://railway.app/dashboard)
 3. **New Project** → **Deploy from GitHub repo**
 4. Select this repo
-5. Railway auto-builds from `Dockerfile`
 
-## 🌐 Access Your VPS
+## 🔐 SSH Access
 
-After deploy, Railway gives you a **public domain** automatically:
+After deploy, check **Railway Logs** for:
 ```
-https://your-project-name.up.railway.app
+==========================================
+  🌐 SSH ACCESS READY
+==========================================
+  URL: tcp://0.tcp.ap.ngrok.io:xxxxx
+  Host: 0.tcp.ap.ngrok.io
+  Port: xxxxx
+  👤 User: root
+  🔐 Pass: root123
+==========================================
 ```
 
-This opens a **web terminal** — direct browser access!
-
-### Login:
-- **Username:** `root`
-- **Password:** `root123`
-
-## 📋 What's Inside
-- Ubuntu 24.04 (latest)
-- 16GB Swap
-- Web-based terminal (ttyd) — no SSH client needed!
-- Python3 + pip + git + ffmpeg
-- Playwright + Chromium
-- htop, tmux, vim, nano, curl, wget
-
-## ⚡ After Login - Install Bot
+Connect:
 ```bash
-# Check resources
-free -h
-
-# Bot dependencies already installed:
-# python3, pip, git, ffmpeg, playwright, chromium
-
-# Just add your bot code:
-git clone https://github.com/youruser/your-bot.git
-cd your-bot
-python3 your_bot.py
+ssh -p xxxxx root@0.tcp.ap.ngrok.io
+# Password: root123
 ```
+
+## ⚡ What's Inside
+- Ubuntu 24.04
+- 16GB Swap
+- OpenSSH (root/root123)
+- ngrok TCP tunnel (auto-restart + debug)
+- Python3 + Playwright + Chromium
+- htop, tmux, vim, nano
 
 ## 🔄 Auto-Restart
-- Railway auto-restarts container on failure
-- Web terminal auto-starts
+- ngrok auto-restarts if it dies
+- Tunnel health check every 5 min
+- Debug logs visible in Railway
 
 ---
 **anonymous ka hukum sar aankhon pe** 👑
