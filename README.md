@@ -1,51 +1,56 @@
-# 🔥 DRC SSH VPS - Railway Deploy
+# 🔥 DRC VPS - Railway Deploy
 
-**Purpose:** SSH access to Railway VPS via ngrok tunnel
+## 🚀 Deploy
 
-## 🚀 Deploy on Railway
+1. **Fork/Use this repo**
+2. [Railway Dashboard](https://railway.app/dashboard) → New Project → Deploy from GitHub repo
+3. Select `hdoejbskkbbd/vps-control`
+4. Railway auto-builds from Dockerfile
 
-1. **Fork/Use this repo** on GitHub
-2. **Connect to Railway:**
-   - Go to [Railway Dashboard](https://railway.app/dashboard)
-   - New Project → Deploy from GitHub repo
-   - Select this repo
-3. **Add Environment Variable:**
-   - `NGROK_AUTHTOKEN` = Your ngrok authtoken
-4. **Deploy!** Railway builds from Dockerfile
+## 🔐 SSH Access (2 Methods)
 
-## 🔐 SSH Access
-
-After deploy, check Railway logs for:
-```
-🌐 SSH ACCESS READY
-URL: tcp://0.tcp.ap.ngrok.io:xxxxx
-User: root
-Pass: Anony#234
-```
-
-Connect:
+### Method 1: Railway CLI (Recommended)
 ```bash
-ssh -p xxxxx root@0.tcp.ap.ngrok.io
-# Password: Anony#234
+# Install Railway CLI
+npm install -g @railway/cli
+
+# Login and connect
+railway login
+railway link
+
+# SSH into your VPS
+railway ssh
+# Then: su root (password: Anony#234)
 ```
+
+### Method 2: Railway Dashboard
+1. Go to your project in Railway Dashboard
+2. Click on the service → "Shell" tab
+3. Direct terminal access!
+
+## 🌐 Web Info
+
+After deploy, visit:
+```
+https://your-project.railway.app
+```
+Shows connection info.
 
 ## 📋 What's Inside
 
-- Ubuntu 22.04 base
-- OpenSSH server (root/Anony#234)
-- ngrok TCP tunnel (auto-starts)
-- Basic tools: curl, wget, vim, htop, tmux
+- Ubuntu 22.04
+- OpenSSH (internal)
+- Python3, pip, git
+- curl, wget, vim, htop, tmux
 
-## ⚡ Next Steps
+## ⚡ Install Bot After SSH
 
-Once SSH is ready, you can:
+Once inside:
 ```bash
-# Install anything you need
-apt update && apt install -y python3 python3-pip
-
-# Setup your bot manually
-# Or clone your bot repo
-git clone https://github.com/youruser/your-bot.git
+apt update
+pip3 install playwright requests psutil schedule
+playwright install chromium
+# Then add your bot code
 ```
 
 ---
