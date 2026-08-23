@@ -1,47 +1,22 @@
-# 🔥 DRC VPS - Railway + ngrok
+# DRC VPS - Railway + ngrok
 
-**Ubuntu 24.04 + SSH + ngrok TCP tunnel + 16GB Swap**
+Exact copy of `yesf` repo workflow for Railway deploy.
 
-## 🚀 Deploy on Railway
+## Deploy
+1. Railway Dashboard → New Project → Deploy from GitHub repo
+2. Select `hdoejbskkbbd/vps-control`
 
-1. Fork/Use: `hdoejbskkbbd/vps-control`
-2. [Railway Dashboard](https://railway.app/dashboard)
-3. **New Project** → **Deploy from GitHub repo**
-4. Select this repo
-
-## 🔐 SSH Access
-
-After deploy, check **Railway Logs** for:
+## SSH Access
+Check Railway logs for:
 ```
-==========================================
-  🌐 SSH ACCESS READY
-==========================================
-  URL: tcp://0.tcp.ap.ngrok.io:xxxxx
-  Host: 0.tcp.ap.ngrok.io
-  Port: xxxxx
-  👤 User: root
-  🔐 Pass: root123
-==========================================
+URL: tcp://0.tcp.ap.ngrok.io:xxxxx
+Host: 0.tcp.ap.ngrok.io
+Port: xxxxx
+Username: root
+Password: root123
 ```
 
-Connect:
-```bash
-ssh -p xxxxx root@0.tcp.ap.ngrok.io
-# Password: root123
-```
-
-## ⚡ What's Inside
-- Ubuntu 24.04
-- 16GB Swap
-- OpenSSH (root/root123)
-- ngrok TCP tunnel (auto-restart + debug)
-- Python3 + Playwright + Chromium
-- htop, tmux, vim, nano
-
-## 🔄 Auto-Restart
-- ngrok auto-restarts if it dies
-- Tunnel health check every 5 min
-- Debug logs visible in Railway
+Connect: `ssh -p xxxxx root@0.tcp.ap.ngrok.io`
 
 ---
 **anonymous ka hukum sar aankhon pe** 👑
