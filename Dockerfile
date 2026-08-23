@@ -3,115 +3,138 @@ FROM ubuntu:24.04
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Asia/Kolkata
 
-# Install everything including a web-based terminal
+# Install deps
 RUN apt-get update && apt-get install -y \
-    openssh-server \
-    curl \
-    wget \
-    unzip \
-    jq \
-    htop \
-    tmux \
-    vim \
-    nano \
-    net-tools \
-    iputils-ping \
-    python3 \
-    python3-pip \
-    git \
-    ffmpeg \
-    ttyd \
-    libglib2.0-0 \
-    libnss3 \
-    libnspr4 \
-    libatk1.0-0 \
-    libatk-bridge2.0-0 \
-    libcups2 \
-    libdrm2 \
-    libdbus-1-3 \
-    libxkbcommon0 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxfixes3 \
-    libxrandr2 \
-    libgbm1 \
-    libpango-1.0-0 \
-    libcairo2 \
-    libasound2 \
-    libatspi2.0-0 \
+    openssh-server curl wget unzip jq htop tmux vim nano net-tools \
+    iputils-ping python3 python3-pip git ffmpeg \
+    libglib2.0-0 libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 \
+    libcups2 libdrm2 libdbus-1-3 libxkbcommon0 libxcomposite1 \
+    libxdamage1 libxfixes3 libxrandr2 libgbm1 libpango-1.0-0 \
+    libcairo2 libasound2 libatspi2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-# Setup 16GB swap
+# 16GB swap
 RUN fallocate -l 16G /swapfile || dd if=/dev/zero of=/swapfile bs=1G count=16 \
-    && chmod 600 /swapfile \
-    && mkswap /swapfile \
-    && swapon /swapfile \
+    && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile \
     && echo '/swapfile none swap sw 0 0' >> /etc/fstab
 
-# Setup SSH
-RUN mkdir -p /var/run/sshd \
-    && echo 'root:root123' | chpasswd \
+# SSH setup
+RUN mkdir -p /var/run/sshd && echo 'root:root123' | chpasswd \
     && sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config \
     && sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
 
-# Install Python packages for bot
-RUN pip3 install --no-cache-dir playwright requests psutil schedule \
-    && playwright install chromium \
-    && playwright install-deps chromium
+# Install ngrok
+RUN curl -sSL https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz -o ngrok.tgz \
+    && tar -xzf ngrok.tgz -C /usr/local/bin && rm ngrok.tgz
 
-# Create web terminal + info server script
-RUN cat > /start.sh << 'EOF'
+# ngrok token EMBEDDED
+RUN ngrok config add-authtoken 3HuPDUNr8MzvSSMkyIDKhrmqK5V_4n78XtG7aihTWjVAhcTxr
+
+# Python packages
+RUN pip3 install --no-cache-dir playwright requests psutil schedule \
+    && playwright install chromium && playwright install-deps chromium
+
+# Start script - foreground ngrok with logging
+RUN cat > /start.sh << 'SCRIPT'
 #!/bin/bash
+set -e
+
 echo "=========================================="
 echo "  🔥 DRC VPS STARTING"
 echo "=========================================="
 
 # Show resources
-echo "[+] System Info:"
+echo "[+] RAM + Swap:"
 free -h
 echo ""
 
 # Start SSH
 service ssh start
-echo "[+] SSH started internally"
-
-# Get Railway public domain
-RAILWAY_DOMAIN=${RAILWAY_PUBLIC_DOMAIN:-"not-set"}
-STATIC_URL=${RAILWAY_STATIC_URL:-"not-set"}
-
+echo "[+] SSH started on port 22"
 echo ""
-echo "=========================================="
-echo "  🌐 RAILWAY ACCESS"
-echo "=========================================="
-echo "  Public Domain: $RAILWAY_DOMAIN"
-echo "  Static URL: $STATIC_URL"
-echo ""
-echo "  Web Terminal: https://$RAILWAY_DOMAIN"
-echo "  (ttyd - web-based terminal)"
-echo ""
-echo "  SSH (internal only):"
-echo "    User: root"
-echo "    Pass: root123"
-echo "=========================================="
 
-# Start web terminal on Railway's PORT
-echo "[+] Starting web terminal on port ${PORT:-8080}..."
-ttyd -p ${PORT:-8080} -c root:root123 bash &
+# Start ngrok in foreground with logging
+echo "[+] Starting ngrok TCP tunnel..."
+echo "[+] Token: 3HuPD... (embedded)"
 
-# Keep alive
-echo "[+] VPS running..."
+# Run ngrok in background but capture output
+ngrok tcp 22 --region ap --log=stdout > /tmp/ngrok.log 2>&1 &
+NGROK_PID=$!
+
+# Wait for tunnel
+echo "[+] Waiting for tunnel (30s)..."
+sleep 15
+
+# Try to get tunnel info multiple times
+for i in 1 2 3 4 5 6; do
+    TUNNEL=$(curl -s --max-time 5 http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url // empty')
+    if [ -n "$TUNNEL" ]; then
+        echo ""
+        echo "=========================================="
+        echo "  🌐 SSH ACCESS READY"
+        echo "=========================================="
+        echo "  URL: $TUNNEL"
+        HOST=$(echo $TUNNEL | sed 's|tcp://||' | cut -d: -f1)
+        PORT=$(echo $TUNNEL | sed 's|tcp://||' | cut -d: -f2)
+        echo "  Host: $HOST"
+        echo "  Port: $PORT"
+        echo ""
+        echo "  👤 User: root"
+        echo "  🔐 Pass: root123"
+        echo "=========================================="
+        break
+    fi
+    echo "  Attempt $i/6..."
+    sleep 5
+done
+
+# If still no tunnel, show debug info
+if [ -z "$TUNNEL" ]; then
+    echo ""
+    echo "[!] Tunnel not established yet"
+    echo "[!] ngrok logs:"
+    cat /tmp/ngrok.log | tail -20
+    echo ""
+    echo "[!] Retrying in 30s..."
+    sleep 30
+    TUNNEL=$(curl -s --max-time 5 http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url // empty')
+    if [ -n "$TUNNEL" ]; then
+        echo "🌐 URL: $TUNNEL"
+    fi
+fi
+
+# Keep alive + monitor
+echo ""
+echo "[+] VPS running - monitoring tunnel..."
 while true; do
-    echo "⏳ [$(date)] DRC VPS alive | Domain: $RAILWAY_DOMAIN"
+    if ! kill -0 $NGROK_PID 2>/dev/null; then
+        echo "⚠️  ngrok died! Restarting..."
+        ngrok tcp 22 --region ap --log=stdout > /tmp/ngrok.log 2>&1 &
+        NGROK_PID=$!
+        sleep 15
+        TUNNEL=$(curl -s --max-time 5 http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url // empty')
+        [ -n "$TUNNEL" ] && echo "🌐 New URL: $TUNNEL"
+    fi
+
+    # Check if tunnel still active
+    ACTIVE=$(curl -s --max-time 3 http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url // empty')
+    if [ -z "$ACTIVE" ]; then
+        echo "⚠️  Tunnel lost! Restarting..."
+        kill $NGROK_PID 2>/dev/null || true
+        ngrok tcp 22 --region ap --log=stdout > /tmp/ngrok.log 2>&1 &
+        NGROK_PID=$!
+        sleep 15
+        ACTIVE=$(curl -s --max-time 5 http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url // empty')
+        [ -n "$ACTIVE" ] && echo "🌐 New URL: $ACTIVE"
+    fi
+
+    echo "⏳ [$(date)] DRC VPS alive | Tunnel: ${ACTIVE:-checking...}"
     sleep 300
 done
-EOF
+SCRIPT
 RUN chmod +x /start.sh
 
-# Expose Railway port
-EXPOSE 8080
-
-# Health check
-HEALTHCHECK --interval=60s --timeout=10s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:${PORT:-8080} || exit 1
+EXPOSE 22
+EXPOSE 4040
 
 CMD ["/start.sh"]
