@@ -1,6 +1,6 @@
-# 🔥 DRC VPS - Railway Deploy
+# 🔥 DRC VPS - Railway Deploy (No ngrok needed!)
 
-**Ubuntu 24.04 + SSH + ngrok + 16GB Swap + Bot Ready**
+**Ubuntu 24.04 + Web Terminal + 16GB Swap + Bot Ready**
 
 ## 🚀 Deploy on Railway
 
@@ -10,39 +10,34 @@
 4. Select this repo
 5. Railway auto-builds from `Dockerfile`
 
-## 🔐 SSH Access
+## 🌐 Access Your VPS
 
-After deploy, check **Railway Logs** for:
+After deploy, Railway gives you a **public domain** automatically:
 ```
-🌐 SSH ACCESS READY
-URL: tcp://0.tcp.ap.ngrok.io:xxxxx
-Host: 0.tcp.ap.ngrok.io
-Port: xxxxx
-👤 User: root
-🔐 Pass: root123
+https://your-project-name.up.railway.app
 ```
 
-Connect:
-```bash
-ssh -p xxxxx root@0.tcp.ap.ngrok.io
-# Password: root123
-```
+This opens a **web terminal** — direct browser access!
+
+### Login:
+- **Username:** `root`
+- **Password:** `root123`
 
 ## 📋 What's Inside
 - Ubuntu 24.04 (latest)
 - 16GB Swap
-- OpenSSH (root/root123)
-- ngrok TCP tunnel (auto-restart)
+- Web-based terminal (ttyd) — no SSH client needed!
 - Python3 + pip + git + ffmpeg
 - Playwright + Chromium
 - htop, tmux, vim, nano, curl, wget
 
-## ⚡ After SSH - Install Bot
+## ⚡ After Login - Install Bot
 ```bash
-# Already installed:
-# - python3, pip, git, ffmpeg
-# - playwright, requests, psutil, schedule
-# - chromium browsers
+# Check resources
+free -h
+
+# Bot dependencies already installed:
+# python3, pip, git, ffmpeg, playwright, chromium
 
 # Just add your bot code:
 git clone https://github.com/youruser/your-bot.git
@@ -51,8 +46,8 @@ python3 your_bot.py
 ```
 
 ## 🔄 Auto-Restart
-- ngrok tunnel auto-restarts if it dies
 - Railway auto-restarts container on failure
+- Web terminal auto-starts
 
 ---
 **anonymous ka hukum sar aankhon pe** 👑
