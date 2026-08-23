@@ -1,13 +1,9 @@
 FROM ubuntu:24.04
 
-LABEL maintainer="DRC"
-LABEL description="DRC VPS - Ubuntu 24.04 with SSH + ngrok + 16GB Swap"
-
-# Prevent interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Asia/Kolkata
 
-# Install everything
+# Install everything including a web-based terminal
 RUN apt-get update && apt-get install -y \
     openssh-server \
     curl \
@@ -24,6 +20,7 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     git \
     ffmpeg \
+    ttyd \
     libglib2.0-0 \
     libnss3 \
     libnspr4 \
@@ -55,24 +52,14 @@ RUN fallocate -l 16G /swapfile || dd if=/dev/zero of=/swapfile bs=1G count=16 \
 RUN mkdir -p /var/run/sshd \
     && echo 'root:root123' | chpasswd \
     && sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config \
-    && sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config \
-    && sed -i 's/#Port 22/Port 22/' /etc/ssh/sshd_config
-
-# Install ngrok
-RUN curl -sSL https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz -o ngrok.tgz \
-    && tar -xzf ngrok.tgz -C /usr/local/bin \
-    && rm ngrok.tgz \
-    && ngrok version
-
-# ngrok token EMBEDDED (no env var needed)
-RUN ngrok config add-authtoken 3HuPDUNr8MzvSSMkyIDKhrmqK5V_4n78XtG7aihTWjVAhcTxr
+    && sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
 
 # Install Python packages for bot
 RUN pip3 install --no-cache-dir playwright requests psutil schedule \
     && playwright install chromium \
     && playwright install-deps chromium
 
-# Create startup script
+# Create web terminal + info server script
 RUN cat > /start.sh << 'EOF'
 #!/bin/bash
 echo "=========================================="
@@ -80,62 +67,51 @@ echo "  🔥 DRC VPS STARTING"
 echo "=========================================="
 
 # Show resources
-echo "[+] RAM + Swap:"
+echo "[+] System Info:"
 free -h
+echo ""
 
 # Start SSH
 service ssh start
-echo "[+] SSH started on port 22"
+echo "[+] SSH started internally"
 
-# Start ngrok tunnel
-echo "[+] Starting ngrok tunnel..."
-ngrok tcp 22 --region ap &
-sleep 10
+# Get Railway public domain
+RAILWAY_DOMAIN=${RAILWAY_PUBLIC_DOMAIN:-"not-set"}
+STATIC_URL=${RAILWAY_STATIC_URL:-"not-set"}
 
-# Get and display tunnel info
-TUNNEL=$(curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url')
-if [ -n "$TUNNEL" ] && [ "$TUNNEL" != "null" ]; then
-    echo ""
-    echo "=========================================="
-    echo "  🌐 SSH ACCESS READY"
-    echo "=========================================="
-    echo "  URL: $TUNNEL"
-    HOST=$(echo $TUNNEL | sed 's|tcp://||' | cut -d: -f1)
-    PORT=$(echo $TUNNEL | sed 's|tcp://||' | cut -d: -f2)
-    echo "  Host: $HOST"
-    echo "  Port: $PORT"
-    echo ""
-    echo "  👤 User: root"
-    echo "  🔐 Pass: root123"
-    echo "=========================================="
-else
-    echo "[!] Tunnel info:"
-    curl -s http://localhost:4040/api/tunnels | jq .
-fi
-
-# Keep alive + auto-restart
 echo ""
-echo "[+] VPS running - auto-restart enabled"
+echo "=========================================="
+echo "  🌐 RAILWAY ACCESS"
+echo "=========================================="
+echo "  Public Domain: $RAILWAY_DOMAIN"
+echo "  Static URL: $STATIC_URL"
+echo ""
+echo "  Web Terminal: https://$RAILWAY_DOMAIN"
+echo "  (ttyd - web-based terminal)"
+echo ""
+echo "  SSH (internal only):"
+echo "    User: root"
+echo "    Pass: root123"
+echo "=========================================="
+
+# Start web terminal on Railway's PORT
+echo "[+] Starting web terminal on port ${PORT:-8080}..."
+ttyd -p ${PORT:-8080} -c root:root123 bash &
+
+# Keep alive
+echo "[+] VPS running..."
 while true; do
-    if ! curl -s http://localhost:4040/api/tunnels > /dev/null 2>&1; then
-        echo "⚠️  Tunnel died! Restarting..."
-        pkill ngrok || true
-        ngrok tcp 22 --region ap &
-        sleep 10
-        TUNNEL=$(curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url')
-        echo "🌐 New URL: $TUNNEL"
-    fi
+    echo "⏳ [$(date)] DRC VPS alive | Domain: $RAILWAY_DOMAIN"
     sleep 300
 done
 EOF
 RUN chmod +x /start.sh
 
-# Expose SSH port (Railway will map this)
-EXPOSE 22
+# Expose Railway port
+EXPOSE 8080
 
 # Health check
 HEALTHCHECK --interval=60s --timeout=10s --start-period=30s --retries=3 \
-    CMD service ssh status || exit 1
+    CMD curl -f http://localhost:${PORT:-8080} || exit 1
 
-# Start everything
 CMD ["/start.sh"]
