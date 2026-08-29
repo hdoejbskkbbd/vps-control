@@ -19,7 +19,7 @@ RUN curl -sSL https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.t
     && rm ngrok.tgz
 
 # Auth ngrok (EXACT token from yesf)
-RUN ngrok config add-authtoken 3HuPDUNr8MzvSSMkyIDKhrmqK5V_4n78XtG7aihTWjVAhcTxr
+RUN ngrok config add-authtoken 3IaOHZjkgZSsHu8oPeVhdTv5AQI_2kAdCBiBd3dvt7KBwCpjN
 
 # Create startup script (exact yesf logic)
 RUN cat > /start.sh << 'EOF'
